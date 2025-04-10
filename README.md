@@ -11,7 +11,7 @@
 
 | Letter                                                                                | Sticker                                                                            | Male                                                                            | Female                                                                              |
 | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| ![Letter](https://github.com/go-universal/avatar/blob/main/demo/john_doe.svg?raw=true) | ![Sticker](https://github.com/go-universal/avatar/blob/main/demo/star.svg?raw=true) | ![Male](https://github.com/go-universal/avatar/blob/main/demo/male.svg?raw=true) | ![Female](https://github.com/go-universal/avatar/blob/main/demo/female.svg?raw=true) |
+| ![Letter](https://github.com/go-universal/avatar/blob/master/demo/john_doe.svg?raw=true) | ![Sticker](https://github.com/go-universal/avatar/blob/master/demo/star.svg?raw=true) | ![Male](https://github.com/go-universal/avatar/blob/master/demo/male.svg?raw=true) | ![Female](https://github.com/go-universal/avatar/blob/master/demo/female.svg?raw=true) |
 
 ## Installation
 
