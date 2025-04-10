@@ -9,8 +9,8 @@
 
 `avatar` is a Go library for generating customizable avatars. It supports creating avatars for text, stickers, and persons with various customization options.
 
-| Letter                                                                                | Sticker                                                                            | Male                                                                            | Female                                                                              |
-| ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Letter                                                                                   | Sticker                                                                               | Male                                                                               | Female                                                                                 |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | ![Letter](https://github.com/go-universal/avatar/blob/master/demo/john_doe.svg?raw=true) | ![Sticker](https://github.com/go-universal/avatar/blob/master/demo/star.svg?raw=true) | ![Male](https://github.com/go-universal/avatar/blob/master/demo/male.svg?raw=true) | ![Female](https://github.com/go-universal/avatar/blob/master/demo/female.svg?raw=true) |
 
 ## Installation
@@ -146,3 +146,36 @@ func main() {
     }
 }
 ```
+
+## Extending
+
+Avatar generation in this package is based on modular SVG elements. You can easily customize the existing avatar styles or add new ones using the provided helper methods.
+
+To create or modify styles:
+
+- Start by editing the [template.ai](https://github.com/go-universal/avatar/blob/master/template.ai) file.
+- Save your design as an SVG.
+- Extract the relevant parts (e.g., shapes, hair, accessories) and integrate them into the avatar package.
+
+Each SVG shape must include placeholders to enable dynamic replacement of colors in the final rendering.
+
+### Template Variables for Custom Palettes
+
+Use the following template variables in your SVG elements to enable dynamic styling:
+
+- `{shape}` — Background shape color
+- `{skin}` — Base skin tone
+- `{skin_shadow}` — Shadowed areas of the skin
+- `{hair}` — Hair color
+- `{hair_shadow}` — Shadowed areas of the hair
+- `{hair_highlight}` — Highlighted areas of the hair
+- `{dress}` — Clothing color
+- `{dress_shadow}` — Shadowed areas of the clothing
+- `{decorator}` — Accessories (e.g., glasses, necklace)
+- `{text}` — Text and sticker color
+
+These variables allow your avatar elements to adapt to different themes and palettes dynamically.
+
+## License
+
+This project is licensed under the ISC License. See the [LICENSE](LICENSE) file for details.
