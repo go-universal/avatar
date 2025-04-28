@@ -1,21 +1,21 @@
 package avatar
 
-func (f *factory) NewMale() PersonAvatar {
-	return newPersonAvatar(f, true)
+func (f *factory) NewMale(name string) PersonAvatar {
+	return newPersonAvatar(f, true, name)
 }
 
-func (f *factory) NewFemale() PersonAvatar {
-	return newPersonAvatar(f, false)
+func (f *factory) NewFemale(name string) PersonAvatar {
+	return newPersonAvatar(f, false, name)
 }
 
-func (f *factory) NewPerson(isMale bool) PersonAvatar {
-	return newPersonAvatar(f, isMale)
+func (f *factory) NewPerson(isMale bool, name string) PersonAvatar {
+	return newPersonAvatar(f, isMale, name)
 }
 
-func (f *factory) NewText(name string) TextAvatar {
-	return newLetterAvatar(f, name)
+func (f *factory) NewText(title, name string) TextAvatar {
+	return newLetterAvatar(f, title, name)
 }
 
-func (f *factory) NewSticker(sticker Sticker) StickerAvatar {
-	return newStickerAvatar(f, string(sticker))
+func (f *factory) NewSticker(sticker Sticker, name string) StickerAvatar {
+	return newStickerAvatar(f, string(sticker), name)
 }

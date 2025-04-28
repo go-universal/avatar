@@ -2,9 +2,12 @@ package avatar
 
 import (
 	"encoding/base64"
+	"errors"
+	"fmt"
 	"os"
 	"strings"
 
+	"github.com/go-universal/utils"
 	"github.com/google/uuid"
 )
 
@@ -36,24 +39,23 @@ type StickerAvatar interface {
 	// Base64 returns the base64 encoded SVG representation of the avatar.
 	Base64() string
 
-	// Save saves the avatar to the specified destination.
-	Save(dest string) error
-
 	// Params returns the parameters of the avatar as a map.
 	Params() map[string]string
-}
 
-// newStickerAvatar creates a new instance of StickerAvatar.
-func newStickerAvatar(f *factory, sticker string) StickerAvatar {
-	return &stickerAV{
-		f:  f,
-		id: uuid.NewString(),
+	// SaveAs saves the avatar to the specified destination.
+	SaveAs(dest string) error
 
-		shape:   "",
-		palette: "",
+	// Save stores the avatar to storage.
+	Save() error
 
-		sticker: sticker,
-	}
+	// Delete removes the uploaded file safely, queueing the file name on failure if queue passed to factory.
+	Delete() error
+
+	// Path returns the file path where the avatar file is stored.
+	Path() string
+
+	// URL returns the URL where the avatar file can be accessed.
+	URL() string
 }
 
 // stickerAV is a concrete implementation of the StickerAvatar interface.
@@ -61,10 +63,31 @@ type stickerAV struct {
 	f  *factory
 	id string
 
+	name string
+	out  string
+
 	shape   string
 	palette string
 
 	sticker string
+}
+
+// newStickerAvatar creates a new instance of StickerAvatar.
+func newStickerAvatar(f *factory, sticker, name string) StickerAvatar {
+	name = strings.TrimSuffix(name, ".svg") + ".svg"
+
+	return &stickerAV{
+		f:  f,
+		id: uuid.NewString(),
+
+		name: name,
+		out:  "",
+
+		shape:   "",
+		palette: "",
+
+		sticker: sticker,
+	}
 }
 
 func (s *stickerAV) idFor(k string) string {
@@ -157,15 +180,82 @@ func (s *stickerAV) Base64() string {
 		string(base64.StdEncoding.EncodeToString([]byte(s.SVG())))
 }
 
-func (s *stickerAV) Save(dest string) error {
-	return os.WriteFile(dest, []byte(s.SVG()), 0644)
-
-}
-
 func (s *stickerAV) Params() map[string]string {
 	return map[string]string{
 		"shape":   s.Shape(),
 		"palette": s.Palette(),
 		"sticker": s.Sticker(),
 	}
+}
+
+func (s *stickerAV) SaveAs(dest string) error {
+	return os.WriteFile(dest, []byte(s.SVG()), 0644)
+}
+
+func (s *stickerAV) Save() error {
+	if s.out != "" || s.f.storage == "" || s.name == "" {
+		return nil
+	}
+
+	var name string
+	if s.f.numbered {
+		if n, err := utils.NumberedFile(s.f.storage, s.name); err != nil {
+			return err
+		} else {
+			name = n
+		}
+	} else {
+		name = utils.TimestampedFile(s.name)
+	}
+
+	dest := utils.NormalizePath(s.f.storage, name)
+
+	exists, err := utils.FileExists(dest)
+	if err != nil {
+		return err
+	} else if exists {
+		return fmt.Errorf("%s file exists", dest)
+	}
+
+	if err := s.SaveAs(dest); err != nil {
+		return err
+	}
+
+	s.out = name
+	return nil
+}
+
+func (s *stickerAV) Delete() error {
+	path := s.Path()
+	if path == "" {
+		return nil
+	}
+
+	err := os.Remove(path)
+	if err == nil || errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+
+	if s.f.queue != nil {
+		return s.f.queue.Push(path)
+	}
+
+	return err
+}
+
+func (s *stickerAV) Path() string {
+	if s.out == "" || s.f.storage == "" {
+		return ""
+	}
+
+	return utils.NormalizePath(s.f.storage, s.out)
+}
+
+func (s *stickerAV) URL() string {
+	path := s.Path()
+	if path == "" {
+		return ""
+	}
+
+	return utils.AbsoluteURL(s.f.prefix, path)
 }

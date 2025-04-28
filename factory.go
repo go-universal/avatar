@@ -1,25 +1,29 @@
 package avatar
 
-import "sync"
+import (
+	"sync"
+
+	"github.com/go-universal/cache"
+)
 
 // AvatarFactory defines an interface for building different types of avatars.
 // It provides methods to create male, female, text and sticker avatars.
 type AvatarFactory interface {
 	// NewMale creates a new male avatar.
-	NewMale() PersonAvatar
+	NewMale(name string) PersonAvatar
 
 	// NewFemale creates a new female avatar.
-	NewFemale() PersonAvatar
+	NewFemale(name string) PersonAvatar
 
 	// NewPerson creates a new person avatar based on the gender specified by the isMale parameter.
 	// If isMale is true, it creates a male avatar; otherwise, a female avatar.
-	NewPerson(isMale bool) PersonAvatar
+	NewPerson(isMale bool, name string) PersonAvatar
 
 	// NewText creates a new text avatar with the specified name.
-	NewText(name string) TextAvatar
+	NewText(title, name string) TextAvatar
 
 	// NewSticker creates a new sticker avatar with the specified stickers.
-	NewSticker(sticker Sticker) StickerAvatar
+	NewSticker(sticker Sticker, name string) StickerAvatar
 
 	// Shapes returns a list of available avatar background shapes.
 	Shapes() []string
@@ -83,6 +87,12 @@ type AvatarFactory interface {
 }
 
 type factory struct {
+	// FS
+	numbered bool
+	storage  string
+	prefix   string
+	queue    cache.Queue
+
 	// Global
 	mutex    sync.RWMutex
 	shapes   map[string]SVGShape

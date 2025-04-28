@@ -13,13 +13,13 @@ func TestTextAvatar(t *testing.T) {
 		CircleShape().
 		Build()
 
-	johnDoe := factory.NewText("John Doe")
+	johnDoe := factory.NewText("John Doe", "")
 
 	johnDoe.
 		RandomizeShape().
 		RandomizePalette()
 
-	err := johnDoe.Save("demo/john_doe.svg")
+	err := johnDoe.SaveAs("demo/john_doe.svg")
 	require.NoError(t, err, "failed to save text avatar")
 }
 
@@ -29,13 +29,13 @@ func TestStickerAvatar(t *testing.T) {
 		CircleShape().
 		Build()
 
-	star := factory.NewSticker("")
+	star := factory.NewSticker("", "")
 
 	star.
 		RandomizeShape().
 		RandomizePalette()
 
-	err := star.Save("demo/star.svg")
+	err := star.SaveAs("demo/star.svg")
 	require.NoError(t, err, "failed to save sticker avatar")
 }
 
@@ -52,7 +52,7 @@ func TestMaleAvatar(t *testing.T) {
 		WhiteSkin().
 		Build()
 
-	male := factory.NewMale()
+	male := factory.NewMale("")
 
 	male.
 		RandomizeShape().
@@ -68,7 +68,7 @@ func TestMaleAvatar(t *testing.T) {
 		RandomizeGlasses().
 		RandomizeAccessory()
 
-	err := male.Save("demo/male.svg")
+	err := male.SaveAs("demo/male.svg")
 	require.NoError(t, err, "failed to save male avatar")
 }
 
@@ -85,7 +85,7 @@ func TestFemaleAvatar(t *testing.T) {
 		WhiteSkin().
 		Build()
 
-	female := factory.NewFemale()
+	female := factory.NewFemale("")
 
 	female.
 		RandomizeShape().
@@ -101,6 +101,6 @@ func TestFemaleAvatar(t *testing.T) {
 		RandomizeGlasses().
 		RandomizeAccessory()
 
-	err := female.Save("demo/female.svg")
+	err := female.SaveAs("demo/female.svg")
 	require.NoError(t, err, "failed to save female avatar")
 }

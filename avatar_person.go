@@ -2,10 +2,13 @@ package avatar
 
 import (
 	"encoding/base64"
+	"errors"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
 
+	"github.com/go-universal/utils"
 	"github.com/google/uuid"
 )
 
@@ -95,17 +98,32 @@ type PersonAvatar interface {
 	// Base64 returns the base64 encoded representation of the avatar.
 	Base64() string
 
-	// Save saves the avatar to the specified destination.
-	Save(dest string) error
-
 	// Params returns the parameters of the avatar as a map.
 	Params() map[string]string
+
+	// SaveAs saves the avatar to the specified destination.
+	SaveAs(dest string) error
+
+	// Save stores the avatar to storage.
+	Save() error
+
+	// Delete removes the uploaded file safely, queueing the file name on failure if queue passed to factory.
+	Delete() error
+
+	// Path returns the file path where the avatar file is stored.
+	Path() string
+
+	// URL returns the URL where the avatar file can be accessed.
+	URL() string
 }
 
 // personAV is a concrete implementation of the PersonAvatar interface.
 type personAV struct {
 	f  *factory
 	id string
+
+	name string
+	out  string
 
 	shape   string
 	palette string
@@ -125,10 +143,15 @@ type personAV struct {
 }
 
 // newPersonAvatar creates a new instance of PersonAvatar.
-func newPersonAvatar(f *factory, isMale bool) PersonAvatar {
+func newPersonAvatar(f *factory, isMale bool, name string) PersonAvatar {
+	name = strings.TrimSuffix(name, ".svg") + ".svg"
+
 	return &personAV{
 		f:  f,
 		id: uuid.NewString(),
+
+		name: name,
+		out:  "",
 
 		shape:   "",
 		palette: "",
@@ -364,10 +387,6 @@ func (p *personAV) Base64() string {
 		string(base64.StdEncoding.EncodeToString([]byte(p.SVG())))
 }
 
-func (p *personAV) Save(dest string) error {
-	return os.WriteFile(dest, []byte(p.SVG()), 0644)
-}
-
 func (p *personAV) Params() map[string]string {
 	return map[string]string{
 		"shape":      p.Shape(),
@@ -384,4 +403,76 @@ func (p *personAV) Params() map[string]string {
 		"glasses":    p.Glasses(),
 		"accessory":  p.Accessory(),
 	}
+}
+
+func (p *personAV) SaveAs(dest string) error {
+	return os.WriteFile(dest, []byte(p.SVG()), 0644)
+}
+
+func (p *personAV) Save() error {
+	if p.out != "" || p.f.storage == "" || p.name == "" {
+		return nil
+	}
+
+	var name string
+	if p.f.numbered {
+		if n, err := utils.NumberedFile(p.f.storage, p.name); err != nil {
+			return err
+		} else {
+			name = n
+		}
+	} else {
+		name = utils.TimestampedFile(p.name)
+	}
+
+	dest := utils.NormalizePath(p.f.storage, name)
+
+	exists, err := utils.FileExists(dest)
+	if err != nil {
+		return err
+	} else if exists {
+		return fmt.Errorf("%s file exists", dest)
+	}
+
+	if err := p.SaveAs(dest); err != nil {
+		return err
+	}
+
+	p.out = name
+	return nil
+}
+
+func (p *personAV) Delete() error {
+	path := p.Path()
+	if path == "" {
+		return nil
+	}
+
+	err := os.Remove(path)
+	if err == nil || errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+
+	if p.f.queue != nil {
+		return p.f.queue.Push(path)
+	}
+
+	return err
+}
+
+func (p *personAV) Path() string {
+	if p.out == "" || p.f.storage == "" {
+		return ""
+	}
+
+	return utils.NormalizePath(p.f.storage, p.out)
+}
+
+func (p *personAV) URL() string {
+	path := p.Path()
+	if path == "" {
+		return ""
+	}
+
+	return utils.AbsoluteURL(p.f.prefix, path)
 }

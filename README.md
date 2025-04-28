@@ -40,13 +40,13 @@ func main() {
         CircleShape().
         Build()
 
-    johnDoe := factory.NewText("John Doe")
+    johnDoe := factory.NewText("John Doe", "")
 
     johnDoe.
         RandomizeShape().
         RandomizePalette()
 
-    err := johnDoe.Save("john_doe.svg")
+    err := johnDoe.SaveAs("john_doe.svg")
     if err != nil {
         log.Fatal(err)
     }
@@ -70,13 +70,13 @@ func main() {
         CircleShape().
         Build()
 
-    star := factory.NewSticker("")
+    star := factory.NewSticker("", "")
 
     star.
         RandomizeShape().
         RandomizePalette()
 
-    err := star.Save("star.svg")
+    err := star.SaveAs("star.svg")
     if err != nil {
         log.Fatal(err)
     }
@@ -107,7 +107,7 @@ func main() {
         WhiteSkin().
         Build()
 
-    male := factory.NewMale()
+    male := factory.NewMale("")
     male.
         RandomizeShape().
         RandomizePalette().
@@ -121,12 +121,12 @@ func main() {
         RandomizeMouth().
         RandomizeGlasses().
         RandomizeAccessory()
-    err := male.Save("male.svg")
+    err := male.SaveAs("male.svg")
     if err != nil {
         log.Fatal(err)
     }
 
-    female := factory.NewFemale()
+    female := factory.NewFemale("")
     female.
         RandomizeShape().
         RandomizePalette().
@@ -140,7 +140,7 @@ func main() {
         RandomizeMouth().
         RandomizeGlasses().
         RandomizeAccessory()
-    err := female.Save("female.svg")
+    err := female.SaveAs("female.svg")
     if err != nil {
         log.Fatal(err)
     }

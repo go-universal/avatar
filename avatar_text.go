@@ -2,10 +2,13 @@ package avatar
 
 import (
 	"encoding/base64"
+	"errors"
+	"fmt"
 	"os"
 	"strings"
 	"unicode/utf8"
 
+	"github.com/go-universal/utils"
 	"github.com/google/uuid"
 )
 
@@ -38,16 +41,43 @@ type TextAvatar interface {
 	// Base64 returns the base64 encoded SVG representation of the avatar.
 	Base64() string
 
-	// Save saves the avatar to the specified destination.
-	Save(dest string) error
-
 	// Params returns the parameters of the avatar as a map.
 	Params() map[string]string
+
+	// SaveAs saves the avatar to the specified destination.
+	SaveAs(dest string) error
+
+	// Save stores the avatar to storage.
+	Save() error
+
+	// Delete removes the uploaded file safely, queueing the file name on failure if queue passed to factory.
+	Delete() error
+
+	// Path returns the file path where the avatar file is stored.
+	Path() string
+
+	// URL returns the URL where the avatar file can be accessed.
+	URL() string
+}
+
+// textAV is a concrete implementation of the StickerAvatar TextAvatar.
+type textAV struct {
+	f  *factory
+	id string
+
+	name string
+	out  string
+
+	shape   string
+	palette string
+
+	letter string
 }
 
 // newLetterAvatar creates a new instance of TextAvatar.
-func newLetterAvatar(f *factory, name string) TextAvatar {
-	letter := extractLetter(name)
+func newLetterAvatar(f *factory, title, name string) TextAvatar {
+	name = strings.TrimSuffix(name, ".svg") + ".svg"
+	letter := extractLetter(title)
 	if v, ok := f.transforms[letter]; ok {
 		letter = v
 	}
@@ -56,22 +86,14 @@ func newLetterAvatar(f *factory, name string) TextAvatar {
 		f:  f,
 		id: uuid.NewString(),
 
+		name: name,
+		out:  "",
+
 		shape:   "",
 		palette: "",
 
 		letter: letter,
 	}
-}
-
-// textAV is a concrete implementation of the StickerAvatar TextAvatar.
-type textAV struct {
-	f  *factory
-	id string
-
-	shape   string
-	palette string
-
-	letter string
 }
 
 func (t *textAV) idFor(k string) string {
@@ -164,14 +186,82 @@ func (t *textAV) Base64() string {
 		string(base64.StdEncoding.EncodeToString([]byte(t.SVG())))
 }
 
-func (t *textAV) Save(dest string) error {
-	return os.WriteFile(dest, []byte(t.SVG()), 0644)
-}
-
 func (t *textAV) Params() map[string]string {
 	return map[string]string{
 		"shape":   t.Shape(),
 		"palette": t.Palette(),
 		"letter":  t.Letter(),
 	}
+}
+
+func (t *textAV) SaveAs(dest string) error {
+	return os.WriteFile(dest, []byte(t.SVG()), 0644)
+}
+
+func (t *textAV) Save() error {
+	if t.out != "" || t.f.storage == "" || t.name == "" {
+		return nil
+	}
+
+	var name string
+	if t.f.numbered {
+		if n, err := utils.NumberedFile(t.f.storage, t.name); err != nil {
+			return err
+		} else {
+			name = n
+		}
+	} else {
+		name = utils.TimestampedFile(t.name)
+	}
+
+	dest := utils.NormalizePath(t.f.storage, name)
+
+	exists, err := utils.FileExists(dest)
+	if err != nil {
+		return err
+	} else if exists {
+		return fmt.Errorf("%s file exists", dest)
+	}
+
+	if err := t.SaveAs(dest); err != nil {
+		return err
+	}
+
+	t.out = name
+	return nil
+}
+
+func (t *textAV) Delete() error {
+	path := t.Path()
+	if path == "" {
+		return nil
+	}
+
+	err := os.Remove(path)
+	if err == nil || errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+
+	if t.f.queue != nil {
+		return t.f.queue.Push(path)
+	}
+
+	return err
+}
+
+func (t *textAV) Path() string {
+	if t.out == "" || t.f.storage == "" {
+		return ""
+	}
+
+	return utils.NormalizePath(t.f.storage, t.out)
+}
+
+func (t *textAV) URL() string {
+	path := t.Path()
+	if path == "" {
+		return ""
+	}
+
+	return utils.AbsoluteURL(t.f.prefix, path)
 }

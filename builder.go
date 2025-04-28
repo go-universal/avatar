@@ -1,7 +1,25 @@
 package avatar
 
+import "github.com/go-universal/cache"
+
 // FactoryBuilder defines the interface for building an avatar factory.
 type FactoryBuilder interface {
+	// WithStorage sets a root path of storage to save avatars.
+	WithStorage(root string) FactoryBuilder
+
+	// WithPrefix sets a path prefix to exclude from the file URL.
+	WithPrefix(prefix string) FactoryBuilder
+
+	// WithQueue sets the queue for managing files that failed to delete.
+	// Files in the queue must be deleted manually later.
+	WithQueue(queue cache.Queue) FactoryBuilder
+
+	// WithNumberedFile enables numeric file naming.
+	WithNumberedFile() FactoryBuilder
+
+	// WithTimestampedFile enables timestamp-based file naming.
+	WithTimestampedFile() FactoryBuilder
+
 	// AddAccessory adds a custom accessory to the avatar factory.
 	// Shape can include fill="{decorator}" to match the avatar palette.
 	AddAccessory(isMale bool, name, shape string) FactoryBuilder
@@ -213,6 +231,11 @@ type builder struct {
 func New() FactoryBuilder {
 	b := &builder{
 		factory: &factory{
+			numbered: false,
+			storage:  "",
+			prefix:   "",
+			queue:    nil,
+
 			shapes:   make(map[string]SVGShape),
 			palettes: make(map[string]SVGPalette),
 
